@@ -24,7 +24,8 @@ module DeviseTokenAuth
         @resource = resource_class.where(q, q_value).first
       end
 
-      if @resource and valid_params?(field, q_value) and @resource.valid_password?(resource_params[:password]) and @resource.confirmed?
+      confirmed = !@resource.devise_modules.include?(:confirmable) || @resource.confirmed?
+      if @resource and valid_params?(field, q_value) and @resource.valid_password?(resource_params[:password]) and confirmed
         # create client id
         @client_id = SecureRandom.urlsafe_base64(nil, false)
         @token     = SecureRandom.urlsafe_base64(nil, false)
@@ -41,7 +42,7 @@ module DeviseTokenAuth
           data: @resource.token_validation_response
         }
 
-      elsif @resource and not @resource.confirmed?
+      elsif @resource and not confirmed
         render json: {
           success: false,
           errors: [
